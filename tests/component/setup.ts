@@ -21,6 +21,7 @@ afterEach(() => {
   cleanup();
   resetIdentified();
   server.resetHandlers();
+  sessionStorage.clear();
   window.history.pushState({}, "", "/");
 });
 afterAll(() => server.close());

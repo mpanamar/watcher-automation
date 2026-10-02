@@ -46,6 +46,14 @@ describe("Watcher app", () => {
     expect(screen.getByRole("link", { name: "Official catalogue" })).toBeInTheDocument();
   });
 
+  it("does not expose admin-only answer or hint fields on the quiz route", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Name the watch" });
+
+    expect(screen.queryByLabelText(/^answer$/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^hint$/i)).not.toBeInTheDocument();
+  });
+
   it("keeps identified count when moving through the queue", async () => {
     const user = userEvent.setup();
     render(<App />);
