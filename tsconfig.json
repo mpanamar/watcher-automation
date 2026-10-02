@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
@@ -9,7 +9,20 @@
     "noEmit": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
-    "types": ["node"]
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "paths": {
+      "react/jsx-runtime": ["./node_modules/preact/jsx-runtime/src/index.d.ts"]
+    }
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts", "vitest.api.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "vitest.config.ts",
+    "vitest.api.config.ts",
+    "vitest.component.config.ts"
+  ]
 }

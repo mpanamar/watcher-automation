@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { publicCaseSchema } from "../domain/cases";
 
+export { publicCaseSchema };
+
 export const errorSchema = z.object({
   error: z.string().min(1),
 });
@@ -42,3 +44,7 @@ export const sessionResponseSchema = z.object({
 });
 
 export const publicCaseListSchema = z.array(publicCaseSchema);
+
+export type Dossier = z.infer<typeof dossierSchema>;
+export type IdentResponse = z.infer<typeof identResponseSchema>;
+export type SessionResponse = z.infer<typeof sessionResponseSchema>;

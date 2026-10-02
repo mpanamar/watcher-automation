@@ -4,12 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm run test:unit && npm run test:api",
+    "test": "npm run test:unit && npm run test:api && npm run test:component",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:api": "vitest run --config vitest.api.config.ts",
-    "dev:api": "tsx src/server/index.ts",
-    "mock": "vite"
+    "test:component": "vitest run --config vitest.component.config.ts",
+    "dev": "concurrently -k -n api,web -c blue,green \"tsx watch src/server/index.ts\" \"wait-on http://127.0.0.1:3001/api/cases && vite\"",
+    "dev:api": "tsx watch src/server/index.ts",
+    "dev:web": "vite",
+    "mock": "vite --config vite.mock.config.ts"
   },
   "repository": {
     "type": "git",
@@ -32,9 +35,14 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@preact/preset-vite": "^2.10.6",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/preact": "^3.2.4",
+    "@testing-library/user-event": "^14.6.7",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.3",
     "concurrently": "^10.0.5",
+    "jsdom": "^30.1.1",
+    "msw": "^2.15.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.1",
