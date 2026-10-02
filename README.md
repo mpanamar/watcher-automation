@@ -1,5 +1,7 @@
 # Watcher
 
+[![CI](https://github.com/mpanamar/watcher-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/mpanamar/watcher-automation/actions/workflows/ci.yml)
+
 Portfolio project for **Test Automation Engineer (JavaScript)**: a small watch-identification quiz built as a real application with a deliberate **test pyramid** (unit → API contract → component). Identify the watch from a film still, confirm your guess, unlock a dossier with catalogue links, and move through a case queue.
 
 The Swiss-minimal visual reference lives in `mock-swiss/`; the product UI is in `src/web/` and talks to Express over HTTP.
@@ -111,6 +113,20 @@ Session state is **in-memory** (per server process).
 Watch mode for unit tests: `npm run test:unit:watch`.
 
 Component tests use **MSW** so they do not require a live Express process.
+
+## Continuous integration
+
+GitHub Actions workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on **push** and **pull requests** to `main` when app or test code changes (`src/`, `tests/`, Vitest/Vite/TS config, lockfile).
+
+Three parallel jobs mirror the pyramid:
+
+| Job | Command |
+|-----|---------|
+| Unit | `npm run test:unit` |
+| API contract | `npm run test:api` |
+| Component | `npm run test:component` |
+
+Local equivalent: `npm test`. E2E is not in CI yet (Sprint 4 deferred).
 
 ## Scripts reference
 
