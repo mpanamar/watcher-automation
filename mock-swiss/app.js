@@ -72,6 +72,7 @@ const cases = [
 
 const els = {
   still: document.getElementById("still"),
+  crop: document.getElementById("dial-crop"),
   casePos: document.getElementById("case-pos"),
   source: document.getElementById("source"),
   subject: document.getElementById("subject"),
@@ -129,13 +130,17 @@ function renderCase() {
   selected = "";
   els.still.src = item.still;
   els.still.alt = item.stillAlt;
+  if (els.crop) els.crop.style.backgroundImage = `url("${item.still}")`;
+  if (window.gsap) {
+    window.gsap.fromTo(els.still, { scale: 0.86, opacity: 0.55 }, { scale: 1, opacity: 1, duration: 1.15, ease: "power3.out" });
+  }
   els.casePos.textContent = `${index + 1} of ${cases.length}`;
   els.source.textContent = item.source;
   els.subject.textContent = item.subject;
   els.frame.textContent = item.frame;
   els.question.textContent = item.question;
   els.command.value = "";
-  els.hint.classList.remove("is-on");
+  els.hint.classList.remove("is-on", "is-correct");
   els.hint.textContent = "";
   els.options.innerHTML = "";
 
@@ -178,9 +183,14 @@ function openDossier(item, already) {
   els.buyUsed.href = item.buyUsed;
   els.lock.textContent = "Identified";
   els.lock.classList.add("status-lock");
+  if (!already) {
+    els.hint.textContent = "Correct";
+    els.hint.classList.add("is-on", "is-correct");
+  }
   els.live.textContent = already
     ? `${item.title} already identified.`
     : `Correct. ${item.title} locked.`;
+  scrubHistory();
 }
 
 function commit() {
@@ -195,15 +205,34 @@ function commit() {
   }
   if (isMatch(guess, item)) {
     locked.add(item.id);
-    els.hint.classList.remove("is-on");
+    els.hint.classList.remove("is-on", "is-correct");
     els.commit.disabled = true;
     els.score.textContent = `${locked.size} / ${cases.length}`;
     openDossier(item, false);
     return;
   }
-  els.hint.textContent = item.hint;
+  els.hint.textContent = `Incorrect. ${item.hint}`;
   els.hint.classList.add("is-on");
   els.live.textContent = "Incorrect. Hint issued.";
+}
+
+function scrubHistory() {
+  if (!window.gsap || !window.ScrollTrigger) return;
+  const history = document.getElementById("history");
+  if (!history || !history.textContent) return;
+  window.gsap.registerPlugin(window.ScrollTrigger);
+  const words = history.textContent.trim().split(/\s+/);
+  history.innerHTML = words.map((word) => `<span>${word}</span>`).join(" ");
+  window.gsap.to(history.querySelectorAll("span"), {
+    opacity: 1,
+    stagger: 0.04,
+    scrollTrigger: {
+      trigger: history,
+      start: "top 80%",
+      end: "bottom 40%",
+      scrub: true,
+    },
+  });
 }
 
 els.form.addEventListener("submit", (e) => {

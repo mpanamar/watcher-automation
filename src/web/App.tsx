@@ -65,32 +65,22 @@ export function App() {
 
   return (
     <>
-      <div class="grain" aria-hidden="true" />
-      <header class="mast">
-        <div class="mast-inner">
-          <a
-            class="wordmark"
-            href="/"
-            onClick={(event: JSX.TargetedMouseEvent<HTMLAnchorElement>) => {
-              event.preventDefault();
-              if (cases[0]) route(`/case/${cases[0].id}`);
-            }}
-          >
-            Watcher
-          </a>
-          <nav class="mast-nav" aria-label="Primary">
-            <span class="meta">
-              {cases.length ? `${currentIndex + 1} of ${cases.length}` : ""}
-            </span>
-            <button
-              type="button"
-              class="theme"
-              aria-pressed={theme === "dark"}
-              onClick={toggleTheme}
-            >
-              {theme === "dark" ? "Light" : "Dark"}
-            </button>
-          </nav>
+      <header class="nav">
+        <a
+          class="wordmark"
+          href="/"
+          onClick={(event: JSX.TargetedMouseEvent<HTMLAnchorElement>) => {
+            event.preventDefault();
+            if (cases[0]) route(`/case/${cases[0].id}`);
+          }}
+        >
+          Watcher
+        </a>
+        <div class="nav-end">
+          <span>{cases.length ? `${currentIndex + 1} of ${cases.length}` : ""}</span>
+          <button type="button" aria-pressed={theme === "dark"} onClick={toggleTheme}>
+            {theme === "dark" ? "Light" : "Dark"}
+          </button>
         </div>
       </header>
 

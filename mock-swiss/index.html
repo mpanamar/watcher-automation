@@ -7,99 +7,61 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="grain" aria-hidden="true"></div>
     <div class="sr" id="live" aria-live="polite"></div>
-
-    <header class="mast">
-      <div class="mast-inner">
-        <p class="wordmark">Watcher</p>
-        <nav class="mast-nav" aria-label="Primary">
-          <span class="meta" id="case-pos">1 of 3</span>
-          <button type="button" class="theme" id="theme" aria-pressed="false">
-            Dark
-          </button>
-        </nav>
+    <header class="nav">
+      <p class="wordmark">Watcher</p>
+      <div class="nav-end">
+        <span id="case-pos">1 of 3</span>
+        <button type="button" id="theme" aria-pressed="false">Dark</button>
       </div>
     </header>
 
-    <main class="stage">
-      <section class="still-wrap">
+    <main class="page">
+      <section class="salon">
+        <div class="copy">
+          <h1 id="console-title">
+            Name the
+            <span id="dial-crop" class="inline-still" aria-hidden="true"></span>
+            watch
+          </h1>
+          <p class="lead" id="question"></p>
+          <dl class="facts">
+            <div><dt>Source</dt><dd id="source"></dd></div>
+            <div><dt>Subject</dt><dd id="subject"></dd></div>
+            <div><dt>Frame</dt><dd id="frame"></dd></div>
+          </dl>
+          <div class="options" id="options" role="group" aria-label="Choices"></div>
+          <form id="ident-form">
+            <label for="command">Watch name</label>
+            <input id="command" name="command" autocomplete="off" spellcheck="false" aria-describedby="hint" />
+            <p class="hint" id="hint" role="status"></p>
+            <button class="fire" id="commit" type="submit">Confirm</button>
+          </form>
+          <p class="lamp"><span>Status</span> <output id="lock">Open</output></p>
+        </div>
         <figure class="frame">
           <img id="still" alt="" width="1600" height="1066" />
         </figure>
-        <div class="still-meta">
-          <p>
-            <span class="k">Source</span>
-            <data id="source"></data>
-          </p>
-          <p>
-            <span class="k">Subject</span>
-            <data id="subject"></data>
-          </p>
-          <p>
-            <span class="k">Frame</span>
-            <data id="frame"></data>
-          </p>
-        </div>
       </section>
 
-      <section class="console" aria-labelledby="console-title">
-        <h1 id="console-title">Name the watch</h1>
-        <p class="lead" id="question"></p>
-
-        <div class="options" id="options"></div>
-
-        <form class="ident" id="ident-form">
-          <div class="field">
-            <label for="command">Watch name</label>
-            <p class="help" id="command-help">Choose a line, or type the model.</p>
-            <input
-              id="command"
-              name="command"
-              autocomplete="off"
-              spellcheck="false"
-              aria-describedby="command-help hint"
-            />
-            <p class="hint" id="hint" role="status"></p>
-          </div>
-          <button class="fire" id="commit" type="submit">Confirm</button>
-        </form>
-
-        <p class="lock-line">
-          <span class="k">Status</span>
-          <output id="lock">Open</output>
-        </p>
-      </section>
-    </main>
-
-    <section class="dossier" id="dossier" hidden aria-live="polite">
-      <article class="history">
+      <section class="dossier" id="dossier" hidden>
         <h2 id="watch-title"></h2>
-        <p class="ref">
-          <span class="k">Reference</span>
-          <data id="watch-ref"></data>
-        </p>
-        <p id="history"></p>
-      </article>
-      <aside class="procure">
-        <a class="buy" id="buy-new" href="#" target="_blank" rel="noreferrer">
-          Official catalogue
-        </a>
-        <a class="buy" id="buy-used" href="#" target="_blank" rel="noreferrer">
-          Chrono24 market
-        </a>
-      </aside>
-    </section>
+        <p class="ref">Reference <data id="watch-ref"></data></p>
+        <p class="history" id="history"></p>
+        <footer class="buys">
+          <a id="buy-new" href="#" target="_blank" rel="noreferrer">Official catalogue</a>
+          <a id="buy-used" href="#" target="_blank" rel="noreferrer">Chrono24 market</a>
+        </footer>
+      </section>
 
-    <nav class="nav-cases" aria-label="Case queue">
-      <button type="button" id="prev">Previous</button>
-      <p class="score">
-        Identified
-        <data id="score" value="0">0 / 3</data>
-      </p>
-      <button type="button" id="next">Next</button>
-    </nav>
-
-    <script src="app.js" type="module"></script>
+      <nav class="queue" aria-label="Case queue">
+        <button type="button" id="prev">Previous</button>
+        <p>Identified <data id="score">0 / 3</data></p>
+        <button type="button" id="next">Next</button>
+      </nav>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>

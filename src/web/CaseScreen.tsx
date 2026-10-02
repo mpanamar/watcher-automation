@@ -106,8 +106,8 @@ export function CaseScreen({
   const hintClass = [
     "hint",
     feedbackVisible ? "is-on" : "",
-    verdict === "correct" ? "hint--correct" : "",
-    verdict === "incorrect" ? "hint--incorrect" : "",
+    verdict === "correct" ? "is-correct" : "",
+    verdict === "incorrect" ? "is-incorrect" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -117,61 +117,60 @@ export function CaseScreen({
       <div class="sr" aria-live="polite">
         {live}
       </div>
-      <main class="stage">
-        <section class="still-wrap">
-          <figure class="frame">
-            <img src={stillSrc(caseItem.still)} alt={caseItem.stillAlt} width={1600} height={1066} />
-          </figure>
-          <div class="still-meta">
-            <p>
-              <span class="k">Source</span>
-              <data>{caseItem.source}</data>
-            </p>
-            <p>
-              <span class="k">Subject</span>
-              <data>{caseItem.subject}</data>
-            </p>
-            <p>
-              <span class="k">Frame</span>
-              <data>{caseItem.frame}</data>
-            </p>
-          </div>
-        </section>
-
-        <section class="console" aria-labelledby="console-title">
-          <h1 id="console-title">Name the watch</h1>
-          <p class="lead">{caseItem.question}</p>
-          <div class="options">
-            {caseItem.options.map((option) => (
-              <button
-                key={option.key}
-                type="button"
-                class="opt"
-                aria-pressed={selected === option.label}
-                disabled={locked}
-                onClick={() => {
-                  setSelected(option.label);
-                  setGuess(option.label);
-                  clearFeedback();
-                }}
-              >
-                <kbd>{option.key}</kbd>
-                <span>{option.label}</span>
-              </button>
-            ))}
-          </div>
-          <form class="ident" onSubmit={confirm}>
-            <div class="field">
+      <main class="page">
+        <section class="salon">
+          <div class="copy">
+            <h1 id="console-title">
+              Name the{" "}
+              <span
+                class="inline-still"
+                aria-hidden="true"
+                style={{ backgroundImage: `url("${stillSrc(caseItem.still)}")` }}
+              />{" "}
+              watch
+            </h1>
+            <p class="lead">{caseItem.question}</p>
+            <dl class="facts">
+              <div>
+                <dt>Source</dt>
+                <dd>{caseItem.source}</dd>
+              </div>
+              <div>
+                <dt>Subject</dt>
+                <dd>{caseItem.subject}</dd>
+              </div>
+              <div>
+                <dt>Frame</dt>
+                <dd>{caseItem.frame}</dd>
+              </div>
+            </dl>
+            <div class="options" role="group" aria-label="Choices">
+              {caseItem.options.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  class="opt"
+                  aria-pressed={selected === option.label}
+                  disabled={locked}
+                  onClick={() => {
+                    setSelected(option.label);
+                    setGuess(option.label);
+                    clearFeedback();
+                  }}
+                >
+                  <kbd>{option.key}</kbd>
+                  <span>{option.label}</span>
+                </button>
+              ))}
+            </div>
+            <form class="ident" onSubmit={confirm}>
               <label for="command">Watch name</label>
-              <p class="help" id="command-help">
-                Choose a line, or type the model.
-              </p>
               <input
                 id="command"
                 name="command"
                 autocomplete="off"
                 spellcheck={false}
-                aria-describedby="command-help hint"
+                aria-describedby="hint"
                 value={guess}
                 disabled={locked}
                 onInput={(event: JSX.TargetedEvent<HTMLInputElement, Event>) => {
@@ -180,51 +179,46 @@ export function CaseScreen({
                 }}
               />
               <p class={hintClass} id="hint" role="status">
-                {formError ? (
-                  formError
-                ) : verdict === "correct" ? (
-                  "Correct"
-                ) : verdict === "incorrect" ? (
-                  <>
-                    <strong>Incorrect</strong>
-                    {hint ? `. ${hint}` : null}
-                  </>
-                ) : null}
+                {formError
+                  ? formError
+                  : verdict === "correct"
+                    ? "Correct"
+                    : verdict === "incorrect"
+                      ? `Incorrect. ${hint}`
+                      : null}
               </p>
-            </div>
-            <button class="fire" type="submit" disabled={locked}>
-              Confirm
-            </button>
-          </form>
-          <p class="lock-line">
-            <span class="k">Status</span>
-            <output class={locked ? "status-lock" : undefined}>{status}</output>
-          </p>
+              <button class="fire" type="submit" disabled={locked}>
+                Confirm
+              </button>
+            </form>
+            <p class="lamp">
+              <span>Status</span> <output class={locked ? "status-lock" : undefined}>{status}</output>
+            </p>
+          </div>
+          <figure class="frame">
+            <img src={stillSrc(caseItem.still)} alt={caseItem.stillAlt} width={1600} height={1066} />
+          </figure>
         </section>
-      </main>
 
-      {dossier ? (
-        <section class="dossier is-open" aria-live="polite">
-          <article class="history">
+        {dossier ? (
+          <section class="dossier is-open" aria-live="polite">
             <h2>{dossier.title}</h2>
             <p class="ref">
-              <span class="k">Reference</span>
-              <data>{dossier.ref}</data>
+              Reference <data>{dossier.ref}</data>
             </p>
-            <p class="history-body">{dossier.history}</p>
-          </article>
-          <aside class="procure">
-            <a class="buy" href={dossier.buyNew} target="_blank" rel="noreferrer">
-              Official catalogue
-            </a>
-            <a class="buy" href={dossier.buyUsed} target="_blank" rel="noreferrer">
-              Chrono24 market
-            </a>
-          </aside>
-        </section>
-      ) : null}
+            <p class="history">{dossier.history}</p>
+            <footer class="buys">
+              <a href={dossier.buyNew} target="_blank" rel="noreferrer">
+                Official catalogue
+              </a>
+              <a href={dossier.buyUsed} target="_blank" rel="noreferrer">
+                Chrono24 market
+              </a>
+            </footer>
+          </section>
+        ) : null}
 
-      <nav class="nav-cases" aria-label="Case queue">
+        <nav class="queue" aria-label="Case queue">
         <button type="button" onClick={() => go(-1)}>
           Previous
         </button>
@@ -237,7 +231,8 @@ export function CaseScreen({
         <button type="button" onClick={() => go(1)}>
           Next
         </button>
-      </nav>
+        </nav>
+      </main>
     </>
   );
 }
