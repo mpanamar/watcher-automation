@@ -26,3 +26,13 @@ export function isLocked(session: Session, caseId: string): boolean {
 export function score(session: Session, total: number): { identified: number; total: number } {
   return { identified: session.locked.size, total };
 }
+
+/** Drops lock ids that are no longer in the published catalog. */
+export function pruneLocked(session: Session, validIds: ReadonlySet<string>): Session {
+  const locked = new Set<string>();
+  for (const id of session.locked) {
+    if (validIds.has(id)) locked.add(id);
+  }
+  if (locked.size === session.locked.size) return session;
+  return { ...session, locked };
+}

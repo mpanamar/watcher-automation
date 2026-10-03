@@ -48,5 +48,8 @@ export async function postIdent(id: string, guess: string): Promise<IdentRespons
 }
 
 export function stillSrc(path: string): string {
+  if (path.startsWith("/") || path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
   return `/${path}`;
 }

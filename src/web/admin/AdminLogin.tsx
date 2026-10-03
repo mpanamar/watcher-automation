@@ -1,35 +1,55 @@
 import type { JSX } from "preact";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { route } from "preact-router";
-import { isAdminSignedIn, signInLocal } from "./admin-auth.ts";
+import { signInAdmin } from "./admin-auth.ts";
+import { useAdminGate } from "./useAdminGate.ts";
 
 export function AdminLogin(_props: { path?: string }) {
+  const gate = useAdminGate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  if (isAdminSignedIn()) {
-    route("/admin", true);
-    return null;
+  useEffect(() => {
+    if (gate.status === "authenticated") {
+      route("/admin", true);
+    }
+  }, [gate.status]);
+
+  if (gate.status === "loading" || gate.status === "authenticated") {
+    return <p class="load-error">Loading…</p>;
   }
 
-  function submit(event: JSX.TargetedEvent<HTMLFormElement, Event>) {
+  async function submit(event: JSX.TargetedEvent<HTMLFormElement, Event>) {
     event.preventDefault();
     setError("");
     if (!email.trim() || !password.trim()) {
       setError("Enter email and password.");
       return;
     }
-    signInLocal();
+
+    setSubmitting(true);
+    const result = await signInAdmin(email, password);
+    setSubmitting(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
     route("/admin");
   }
+
+  const configHint =
+    gate.status === "unconfigured"
+      ? "Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your local .env, then restart Vite."
+      : "Sign in with your Supabase Auth user.";
 
   return (
     <main class="page admin-page">
       <section class="admin-panel admin-panel--narrow">
         <h1 class="admin-title">Admin sign in</h1>
-        <p class="admin-lead">Local shell only. Supabase auth arrives in a later sprint.</p>
-        <form class="admin-form" onSubmit={submit} noValidate>
+        <p class="admin-lead">{configHint}</p>
+        <form class="admin-form" onSubmit={(event) => void submit(event)} noValidate>
           <label class="admin-field">
             <span>Email</span>
             <input
@@ -37,6 +57,7 @@ export function AdminLogin(_props: { path?: string }) {
               name="email"
               autoComplete="username"
               value={email}
+              disabled={submitting || gate.status === "unconfigured"}
               onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
             />
           </label>
@@ -47,6 +68,7 @@ export function AdminLogin(_props: { path?: string }) {
               name="password"
               autoComplete="current-password"
               value={password}
+              disabled={submitting || gate.status === "unconfigured"}
               onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
             />
           </label>
@@ -55,7 +77,7 @@ export function AdminLogin(_props: { path?: string }) {
               {error}
             </p>
           ) : null}
-          <button type="submit" class="fire admin-submit">
+          <button type="submit" class="fire admin-submit" disabled={submitting || gate.status === "unconfigured"}>
             Sign in
           </button>
         </form>

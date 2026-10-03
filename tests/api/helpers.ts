@@ -1,8 +1,12 @@
 import type { AddressInfo } from "node:net";
+import type { Express } from "express";
 import { createApp } from "../../src/server/app";
+import { createSeedCatalog } from "../../src/server/catalog";
 
-export async function startTestServer(): Promise<{ url: string; close: () => Promise<void> }> {
-  const app = createApp();
+export async function startTestServer(app: Express = createApp(createSeedCatalog())): Promise<{
+  url: string;
+  close: () => Promise<void>;
+}> {
   const server = app.listen(0);
 
   await new Promise<void>((resolve, reject) => {

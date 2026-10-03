@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { getCaseById } from "../../src/domain/cases";
+import { getSeedCaseById } from "../../src/server/seed-cases";
 import { errorSchema, identResponseSchema } from "../../src/server/http-schemas";
 import { hasSpoilerKeys, startTestServer } from "./helpers";
 
@@ -98,7 +98,7 @@ describe("POST /api/cases/:id/ident", () => {
   });
 
   it("returns a hint without the full answer on a miss", async () => {
-    const item = getCaseById("W-07");
+    const item = getSeedCaseById("W-07");
     if (!item) throw new Error("Missing W-07");
 
     const response = await fetch(`${url}/api/cases/W-07/ident`, {

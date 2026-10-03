@@ -3,6 +3,7 @@ import preact from "@preact/preset-vite";
 
 export default defineConfig({
   plugins: [preact()],
+  envDir: process.cwd(),
   test: {
     name: "component",
     include: ["tests/component/**/*.test.tsx"],

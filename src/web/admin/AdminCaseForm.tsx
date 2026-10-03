@@ -1,7 +1,8 @@
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { route } from "preact-router";
-import { isAdminSignedIn } from "./admin-auth.ts";
+import { AdminNotAdmin } from "./AdminNotAdmin.tsx";
+import { useAdminGate } from "./useAdminGate.ts";
 import { saveCaseLocally } from "./admin-storage.ts";
 import {
   canAttemptSave,
@@ -13,6 +14,7 @@ import {
 type Props = { id?: string; path?: string };
 
 export function AdminCaseForm(props: Props) {
+  const gate = useAdminGate();
   const caseId = props.id ?? "new";
   const isNew = caseId === "new";
   const [form, setForm] = useState<CaseFormState>(() => {
@@ -25,13 +27,21 @@ export function AdminCaseForm(props: Props) {
   const [savedNotice, setSavedNotice] = useState("");
 
   useEffect(() => {
-    if (!isAdminSignedIn()) {
+    if (gate.status === "anonymous" || gate.status === "unconfigured") {
       route("/admin/login", true);
     }
-  }, []);
+  }, [gate.status]);
 
-  if (!isAdminSignedIn()) {
+  if (gate.status === "loading") {
+    return <p class="load-error">Loading…</p>;
+  }
+
+  if (gate.status === "anonymous" || gate.status === "unconfigured") {
     return null;
+  }
+
+  if (gate.status === "not_admin") {
+    return <AdminNotAdmin email={gate.email} />;
   }
 
   function patch(partial: Partial<CaseFormState>) {

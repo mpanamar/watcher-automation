@@ -1,24 +1,40 @@
 import { useEffect, useState } from "preact/hooks";
 import { route } from "preact-router";
-import { isAdminSignedIn, signOutLocal } from "./admin-auth.ts";
+import { signOutAdmin } from "./admin-auth.ts";
+import { AdminNotAdmin } from "./AdminNotAdmin.tsx";
 import { loadSavedCases } from "./admin-storage.ts";
 import { adminMockCaseCard } from "./mock-case.ts";
+import { useAdminGate } from "./useAdminGate.ts";
 
 export function AdminList(_props: { path?: string }) {
+  const gate = useAdminGate();
   const [saved, setSaved] = useState(loadSavedCases());
 
   useEffect(() => {
-    if (!isAdminSignedIn()) {
+    if (gate.status === "anonymous" || gate.status === "unconfigured") {
       route("/admin/login", true);
     }
-  }, []);
+  }, [gate.status]);
 
-  if (!isAdminSignedIn()) {
+  if (gate.status === "loading") {
+    return <p class="load-error">Loading…</p>;
+  }
+
+  if (gate.status === "anonymous" || gate.status === "unconfigured") {
     return null;
+  }
+
+  if (gate.status === "not_admin") {
+    return <AdminNotAdmin email={gate.email} />;
   }
 
   function refresh() {
     setSaved(loadSavedCases());
+  }
+
+  async function signOut() {
+    await signOutAdmin();
+    route("/admin/login");
   }
 
   return (
@@ -33,14 +49,7 @@ export function AdminList(_props: { path?: string }) {
             <button type="button" class="fire" onClick={() => route("/admin/cases/new")}>
               New case
             </button>
-            <button
-              type="button"
-              class="admin-ghost"
-              onClick={() => {
-                signOutLocal();
-                route("/admin/login");
-              }}
-            >
+            <button type="button" class="admin-ghost" onClick={() => void signOut()}>
               Sign out
             </button>
           </div>

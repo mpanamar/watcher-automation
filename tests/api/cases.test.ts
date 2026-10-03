@@ -24,6 +24,7 @@ describe("GET /api/cases", () => {
     expect(response.status).toBe(200);
     expect(publicCaseListSchema.parse(body)).toHaveLength(3);
     expect(hasSpoilerKeys(body)).toBe(false);
+    expect(publicCaseListSchema.parse(body)[0]?.still).toMatch(/^\//);
   });
 
   it("returns 200 for one case without spoilers", async () => {

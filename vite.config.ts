@@ -1,8 +1,13 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
 
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig({
   plugins: [preact()],
+  envDir: projectRoot,
   root: "src/web",
   publicDir: "public",
   server: {

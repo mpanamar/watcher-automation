@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getCaseById } from "../../src/domain/cases";
 import { isMatch, normalize } from "../../src/domain/ident";
+import { getSeedCaseById } from "../../src/server/seed-cases";
 
-const seamaster = getCaseById("W-07");
-const monaco = getCaseById("W-11");
-const speedmaster = getCaseById("W-19");
+const seamaster = getSeedCaseById("W-07");
+const monaco = getSeedCaseById("W-11");
+const speedmaster = getSeedCaseById("W-19");
 
 if (!seamaster || !monaco || !speedmaster) {
   throw new Error("Catalog is missing expected cases.");

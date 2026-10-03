@@ -51,29 +51,46 @@ create table if not exists public.admins (
 alter table public.cases enable row level security;
 alter table public.admins enable row level security;
 
+create or replace function public.current_auth_email()
+returns text
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select lower(
+    coalesce(
+      nullif(trim(auth.email()), ''),
+      nullif(trim(auth.jwt() ->> 'email'), ''),
+      nullif(trim(auth.jwt() -> 'user_metadata' ->> 'email'), ''),
+      (select u.email from auth.users u where u.id = auth.uid())
+    )
+  );
+$$;
+
 create or replace function public.is_admin()
 returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = public, auth
 as $$
   select exists (
     select 1
     from public.admins a
-    where a.email = lower(coalesce(auth.jwt() ->> 'email', ''))
+    where lower(trim(a.email)) = public.current_auth_email()
   );
 $$;
 
+grant execute on function public.is_admin() to authenticated;
+
 revoke all on public.cases from anon, authenticated;
 revoke all on public.admins from anon, authenticated;
+-- Table privileges are required before RLS policies apply.
+grant select on public.admins to authenticated;
+grant select, insert, update, delete on public.cases to authenticated;
+-- View, not a table: anon reads public_cases via GRANT, not RLS.
 grant select on public.public_cases to anon, authenticated;
-
-create policy "public_cases_select"
-  on public.public_cases
-  for select
-  to anon, authenticated
-  using (true);
 
 create policy "cases_admin_select"
   on public.cases
@@ -104,7 +121,7 @@ create policy "admins_self_select"
   on public.admins
   for select
   to authenticated
-  using (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
+  using (lower(trim(email)) = public.current_auth_email());
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (

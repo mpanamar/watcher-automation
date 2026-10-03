@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/mpanamar/watcher-automation#readme",
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "express": "^5.2.1",
     "preact": "^10.29.8",
     "preact-router": "^4.1.2",

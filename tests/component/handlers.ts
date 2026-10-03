@@ -1,15 +1,25 @@
 import { http, HttpResponse } from "msw";
-import { cases, getCaseById, toPublicCase } from "../../src/domain/cases";
+import { toPublicCase } from "../../src/domain/cases";
 import { isMatch } from "../../src/domain/ident";
+import { getSeedCaseById, seedCases } from "../../src/server/seed-cases";
+import { resolveStillForPublic } from "../../src/server/still-url";
 
 const locked = new Set<string>();
+
+function withResolvedStill<T extends { still: string }>(item: T): T {
+  return { ...item, still: resolveStillForPublic(item.still, "seed") };
+}
+
+function publicSeedList() {
+  return seedCases.map((item) => toPublicCase(withResolvedStill(item)));
+}
 
 export function resetIdentified(): void {
   locked.clear();
 }
 
 function dossierOf(id: string) {
-  const item = getCaseById(id);
+  const item = getSeedCaseById(id);
   if (!item) return null;
   return {
     id: item.id,
@@ -23,24 +33,24 @@ function dossierOf(id: string) {
 
 export const handlers = [
   http.get("*/api/cases", () => {
-    return HttpResponse.json(cases.map(toPublicCase));
+    return HttpResponse.json(publicSeedList());
   }),
   http.get("*/api/cases/:id", ({ params }) => {
-    const item = getCaseById(String(params.id));
+    const item = getSeedCaseById(String(params.id));
     if (!item) return HttpResponse.json({ error: "Case not found" }, { status: 404 });
-    return HttpResponse.json(toPublicCase(item));
+    return HttpResponse.json(toPublicCase(withResolvedStill(item)));
   }),
   http.get("*/api/session", () => {
     return HttpResponse.json({
       identified: locked.size,
-      total: cases.length,
+      total: seedCases.length,
       locked: [...locked],
       index: 0,
     });
   }),
   http.post("*/api/cases/:id/ident", async ({ params, request }) => {
     const id = String(params.id);
-    const item = getCaseById(id);
+    const item = getSeedCaseById(id);
     if (!item) return HttpResponse.json({ error: "Case not found" }, { status: 404 });
 
     const body = (await request.json()) as { guess?: unknown };
