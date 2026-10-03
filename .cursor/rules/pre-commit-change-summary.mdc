@@ -1,0 +1,81 @@
+---
+description: Before any git commit, run the pre-commit change summary workflow (evidence, tests, narrative, commit message).
+alwaysApply: true
+---
+
+# Pre-commit change summary (mandatory)
+
+When the user asks to **commit**, **push**, **prepare a commit**, or you are about to run `git add` / `git commit` on their behalf, you **must** complete this workflow first. Do not skip unless the user explicitly forbids analysis.
+
+Full skill reference: `.cursor/skills/pre-commit-change-summary/SKILL.md`
+
+## 1. Collect evidence (parallel when possible)
+
+- `git status`
+- `git diff` and `git diff --cached`
+- `git log -5 --oneline` (match commit tone)
+- If the branch diverged from `main`: `git log main..HEAD --oneline` and/or `git diff main...HEAD`
+
+## 2. Understand scope
+
+- Cover **every** change that would land, not only the last edit.
+- Group by concern: domain, API, UI, admin, tests, config, docs, Supabase.
+- Read files when the diff alone does not explain behavior (new modules, renames, config).
+
+## 3. Verify
+
+- If code changed, run relevant tests when reasonable (`npm test` or targeted scripts).
+- Note pass/fail in the summary. **Do not commit on failing tests** unless the user explicitly accepts that.
+
+## 4. Present summary to the user
+
+Use this structure (omit empty sections). Use the **user's language** for the narrative unless they asked for English.
+
+```markdown
+## Pre-commit summary
+
+### Overview
+[2–4 sentences: end-to-end outcome]
+
+### Implemented
+- **[Area]** — concrete behavior; key files
+
+### User-visible / product behavior
+- [What running the app or API would show]
+
+### Technical notes
+- [Proxy rules, typing, renames, breaking changes]
+
+### Files
+| Path | Change |
+|------|--------|
+| `path` | added / modified / deleted — one-line purpose |
+
+### Tests & verification
+- [Commands and results, or what was not run and why]
+
+### Suggested commit message
+<type>(<scope>): <imperative subject ~72 chars>
+
+<optional body: why, not a file list>
+
+### Follow-ups (optional)
+```
+
+## 5. Commit gate
+
+- Show the **full summary** before committing.
+- Summary only → stop after the summary.
+- Commit requested → draft message from the summary, then follow repo git safety rules:
+  - Never update `git config`
+  - Never commit `.env`, credentials, or secrets; warn if they appear in status
+  - Do not commit local-only files the project keeps private (e.g. `PLAN.md` if gitignored)
+  - Respect hooks; no `--no-verify` unless the user explicitly requests it
+  - Commit only when the user asked; use HEREDOC-style multi-line messages on Unix; on PowerShell use `-m` twice or `-F` with a here-string
+
+## Quality bar
+
+- **Specific**: endpoints, components, test files, scripts — not "updated code".
+- **Complete**: untracked files; deletions and renames.
+- **Honest**: implemented vs scaffolded vs untested.
+- Commit subject explains **why**, not a filename list. Types: `feat`, `fix`, `test`, `refactor`, `chore`, `docs`.

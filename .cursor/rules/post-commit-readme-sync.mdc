@@ -1,0 +1,78 @@
+---
+description: After commits or when docs are stale, sync README.md from the repo (scripts, structure, tests, behavior).
+alwaysApply: true
+---
+
+# Post-commit README sync
+
+When the user **just committed**, asks to **update / sync README**, **document the project**, or you finished a sprint that changed scripts, layout, or test layers, refresh **`README.md`** from the codebase. Derive facts from the repo, not memory.
+
+Full skill reference: `.cursor/skills/post-commit-readme-sync/SKILL.md`
+
+## When to run
+
+- After a successful code commit (same session), if docs may be out of date.
+- User says: update readme, sync README, keep docs current.
+- New routes, admin, Supabase, CI, or npm scripts landed.
+
+Do **not** edit gitignored local-only docs (e.g. `PLAN.md`) unless the user names other files.
+
+## 1. Inspect the repo (parallel when possible)
+
+- `package.json` — scripts, dependencies
+- `src/` — domain, server, web, admin
+- `tests/` — unit, api, component, e2e/a11y placeholders
+- `vite.config.ts`, `vitest*.config.ts`, `mock-swiss/`, `supabase/` if present
+- `git log -3 --oneline` and recent diff if needed for nuance
+
+## 2. Reconcile README sections
+
+Update in place; do not remove unrelated user prose without reason.
+
+| Section | Source of truth |
+|---------|-----------------|
+| Product / purpose | App behavior + domain |
+| Tech stack | `package.json` dependencies |
+| Project structure | Actual directories |
+| Prerequisites | CI Node version or LTS |
+| Install & run | Exact npm scripts |
+| API | `src/server/app.ts` routes |
+| Testing | Scripts + `tests/` layout |
+| Visual mock | `mock-swiss/` + `npm run mock` |
+| Env / Supabase | `.env.example`, migrations |
+| Roadmap | Mark **planned** honestly (E2E, Playwright config, etc.) |
+
+## 3. Write rules
+
+- **English** for README unless the user requires another language.
+- Copy-pasteable commands (Windows-friendly where the project uses them).
+- Ports: API **3001**, Vite **5173**, mock **5174**.
+- Mention Vite `/api` proxy and `src/web/watcher-api.ts` (not `api.ts` at web root).
+- Pyramid: what **exists** vs **planned** only.
+
+## 4. Verify
+
+- Every script in README exists in `package.json`.
+- No dead paths, removed tools, or wrong ports.
+
+## 5. Commit gate
+
+- **Commit README** only if the user asked to commit doc updates.
+- Otherwise show a short diff summary of what changed in README.
+
+Suggested doc commit when user wants it:
+
+```
+docs: sync README with <feature or sprint>
+```
+
+## Coordination with pre-commit rule
+
+- Pre-commit: summary and tests **before** code commit.
+- Post-commit: align README **after** code commit.
+- Same session: commit code first, then refresh README; optional second commit for docs.
+
+## Quality bar
+
+- Accurate over marketing.
+- If unsure, read files or configs — do not guess script names or ports.
