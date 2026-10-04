@@ -6,6 +6,19 @@ import { resetIdentified } from "./handlers";
 import { server } from "./msw-server";
 import { resetSupabaseMock } from "./supabase-client-mock";
 
+if (!URL.createObjectURL) {
+  URL.createObjectURL = () => "blob:mock-preview";
+} else {
+  const nativeCreateObjectURL = URL.createObjectURL.bind(URL);
+  URL.createObjectURL = (obj: Blob | MediaSource) => {
+    try {
+      return nativeCreateObjectURL(obj);
+    } catch {
+      return "blob:mock-preview";
+    }
+  };
+}
+
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: (query: string) => ({

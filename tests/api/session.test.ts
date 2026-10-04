@@ -21,6 +21,6 @@ describe("GET /api/session", () => {
     const body = sessionResponseSchema.parse(await response.json());
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ identified: 0, total: 3, locked: [], index: 0 });
+    expect(body).toEqual({ identified: 0, total: 5, locked: [], index: 0 });
   });
 });

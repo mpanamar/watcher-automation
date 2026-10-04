@@ -22,7 +22,7 @@ describe("GET /api/cases", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(publicCaseListSchema.parse(body)).toHaveLength(3);
+    expect(publicCaseListSchema.parse(body)).toHaveLength(5);
     expect(hasSpoilerKeys(body)).toBe(false);
     expect(publicCaseListSchema.parse(body)[0]?.still).toMatch(/^\//);
   });

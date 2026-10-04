@@ -1,15 +1,17 @@
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { route } from "preact-router";
+import { adminStillPublicUrl, fetchAdminCaseRecord, saveAdminCase } from "./admin-cases.ts";
 import { AdminNotAdmin } from "./AdminNotAdmin.tsx";
-import { useAdminGate } from "./useAdminGate.ts";
-import { saveCaseLocally } from "./admin-storage.ts";
 import {
   canAttemptSave,
   emptyCaseForm,
   parseCaseForm,
+  watchCaseToFormState,
   type CaseFormState,
 } from "./case-form-state.ts";
+import { AdminHeadlineCropEditor } from "./AdminHeadlineCropEditor.tsx";
+import { useAdminGate } from "./useAdminGate.ts";
 
 type Props = { id?: string; path?: string };
 
@@ -23,14 +25,35 @@ export function AdminCaseForm(props: Props) {
     return base;
   });
   const [stillPreview, setStillPreview] = useState("");
+  const [stillFile, setStillFile] = useState<File | null>(null);
   const [formError, setFormError] = useState("");
   const [savedNotice, setSavedNotice] = useState("");
+  const [loadingCase, setLoadingCase] = useState(!isNew);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (gate.status === "anonymous" || gate.status === "unconfigured") {
       route("/admin/login", true);
     }
   }, [gate.status]);
+
+  useEffect(() => {
+    if (isNew || gate.status !== "authenticated") return;
+    setLoadingCase(true);
+    fetchAdminCaseRecord(caseId)
+      .then((record) => {
+        if (!record) {
+          setFormError("Case not found");
+          return;
+        }
+        setForm(watchCaseToFormState(record.item, record.published));
+        setStillPreview(adminStillPublicUrl(record.item.still));
+      })
+      .catch((reason: unknown) => {
+        setFormError(reason instanceof Error ? reason.message : "Could not load case");
+      })
+      .finally(() => setLoadingCase(false));
+  }, [caseId, isNew, gate.status]);
 
   if (gate.status === "loading") {
     return <p class="load-error">Loading…</p>;
@@ -42,6 +65,10 @@ export function AdminCaseForm(props: Props) {
 
   if (gate.status === "not_admin") {
     return <AdminNotAdmin email={gate.email} />;
+  }
+
+  if (loadingCase) {
+    return <p class="load-error">Loading case…</p>;
   }
 
   function patch(partial: Partial<CaseFormState>) {
@@ -98,29 +125,56 @@ export function AdminCaseForm(props: Props) {
   function onStillFile(event: JSX.TargetedEvent<HTMLInputElement, Event>) {
     const file = event.currentTarget.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setStillPreview(url);
-    patch({ still: `uploads/${file.name}` });
+    setStillFile(file);
+    setStillPreview(URL.createObjectURL(file));
+    const basename = file.name.replace(/^.*[/\\]/, "");
+    if (form.id.trim()) {
+      patch({ still: `${form.id.trim()}/${basename}` });
+    }
   }
 
-  function submit(event: JSX.TargetedEvent<HTMLFormElement, Event>) {
+  async function submit(event: JSX.TargetedEvent<HTMLFormElement, Event>) {
     event.preventDefault();
     setFormError("");
     setSavedNotice("");
-    if (!canAttemptSave(form)) {
-      setFormError("Add a question and at least two options before saving.");
+    if (!canAttemptSave(form, isNew)) {
+      setFormError("Add a case id, question, and at least two options before saving.");
       return;
     }
-    const parsed = parseCaseForm(form);
+    const basename = stillFile?.name.replace(/^.*[/\\]/, "") ?? "";
+    const formForParse =
+      stillFile && form.id.trim() && !form.still.trim()
+        ? { ...form, still: `${form.id.trim()}/${basename}` }
+        : form;
+    const parsed = parseCaseForm(formForParse);
     if (!parsed.ok) {
       setFormError(parsed.message);
       return;
     }
-    saveCaseLocally(parsed.data);
-    setSavedNotice("Saved locally");
+    if (isNew && !stillFile) {
+      setFormError("Upload a still image for a new case.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await saveAdminCase(parsed.data, {
+        published: form.published,
+        isNew,
+        stillFile,
+      });
+      setSavedNotice("Saved");
+      route("/admin");
+    } catch (reason: unknown) {
+      setFormError(reason instanceof Error ? reason.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  const saveDisabled = !canAttemptSave(form);
+  const saveDisabled = !canAttemptSave(form, isNew) || saving;
+  const headlineStillSrc =
+    stillPreview || (form.still.trim() ? adminStillPublicUrl(form.still) : "");
 
   return (
     <main class="page admin-page">
@@ -135,7 +189,7 @@ export function AdminCaseForm(props: Props) {
           </button>
         </div>
 
-        <form class="admin-form admin-form--wide" onSubmit={submit} noValidate>
+        <form class="admin-form admin-form--wide" onSubmit={(event) => void submit(event)} noValidate>
           <div class="admin-form-grid">
             <label class="admin-field">
               <span>Case id</span>
@@ -162,7 +216,7 @@ export function AdminCaseForm(props: Props) {
           {stillPreview || form.still ? (
             <figure class="admin-still-preview">
               <img
-                src={stillPreview || (form.still.startsWith("http") ? form.still : `/${form.still}`)}
+                src={stillPreview || adminStillPublicUrl(form.still)}
                 alt=""
               />
             </figure>
@@ -171,6 +225,25 @@ export function AdminCaseForm(props: Props) {
             <span>Still alt text</span>
             <input value={form.stillAlt} onInput={(e) => patch({ stillAlt: (e.target as HTMLInputElement).value })} />
           </label>
+
+          <fieldset class="admin-fieldset">
+            <legend>Headline crop</legend>
+            <p class="admin-field-hint">
+              Adjusts the pill in “Name the … watch”. Higher horizontal moves focus right (toward the wrist on
+              many stills).
+            </p>
+            {headlineStillSrc ? (
+              <AdminHeadlineCropEditor
+                stillSrc={headlineStillSrc}
+                x={form.inlineStillX}
+                y={form.inlineStillY}
+                zoom={form.inlineStillZoom}
+                onChange={(next) => patch(next)}
+              />
+            ) : (
+              <p class="admin-field-hint">Upload a still to preview the headline crop.</p>
+            )}
+          </fieldset>
 
           <div class="admin-form-grid">
             <label class="admin-field">
@@ -285,7 +358,7 @@ export function AdminCaseForm(props: Props) {
 
           <div class="admin-form-actions">
             <button type="submit" class="fire" disabled={saveDisabled}>
-              Save
+              {saving ? "Saving…" : "Save"}
             </button>
             <button type="button" class="admin-ghost" onClick={() => route("/admin")}>
               Cancel

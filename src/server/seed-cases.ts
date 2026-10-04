@@ -71,6 +71,52 @@ const catalog: WatchCase[] = [
     buyNew: "https://www.omegawatches.com/en-us/watches/speedmaster/moonwatch",
     buyUsed: "https://www.chrono24.com/omega/speedmaster--cat32.htm",
   },
+  {
+    id: "W-08",
+    still: "stills/still-04-bullitt.png",
+    stillAlt: "Driver wrist on a Mustang steering wheel wearing a black chronograph",
+    source: "Bullitt (1968)",
+    subject: "Steve McQueen as Frank Bullitt",
+    frame: "00:58:20",
+    question: "Which chronograph is on Bullitt's wrist in the chase?",
+    options: [
+      { key: "A", label: "Heuer Autavia" },
+      { key: "B", label: "Rolex Daytona" },
+      { key: "C", label: "Breitling Navitimer" },
+    ],
+    answer: "Heuer Autavia",
+    aliases: ["heuer autavia", "autavia", "tag heuer autavia", "autavia 1138"],
+    hint: "McQueen chose Heuer for both Bullitt and Le Mans. This one is a round motorsport chronograph, not the square Monaco.",
+    title: "Heuer Autavia 1138",
+    ref: "1138 / CBE2110.FC8226",
+    history:
+      "Heuer's Autavia started as a dashboard timer before it moved to the wrist in 1962. McQueen wore an Autavia in Bullitt's famous San Francisco chase. The black dial and rotating bezel read as a driver's tool watch, distinct from the square Monaco he made famous in Le Mans.",
+    buyNew: "https://www.tagheuer.com/us/en/watches/tag-heuer-autavia/",
+    buyUsed: "https://www.chrono24.com/heuer/autavia--mod44.htm",
+  },
+  {
+    id: "W-22",
+    still: "stills/still-05-murph.png",
+    stillAlt: "Flight-suit wrist wearing a field watch with a black dial",
+    source: "Interstellar (2014)",
+    subject: "Matthew McConaughey as Cooper",
+    frame: "01:46:08",
+    question: "Name Cooper's field watch from the mission.",
+    options: [
+      { key: "A", label: "Hamilton Khaki Field Murph" },
+      { key: "B", label: "Citizen Eco-Drive Skyhawk" },
+      { key: "C", label: "Seiko SNK809" },
+    ],
+    answer: "Hamilton Khaki Field Murph",
+    aliases: ["murph", "hamilton murph", "khaki field murph", "hamilton khaki murph"],
+    hint: "Hamilton supplied the props. No chronograph pushers — just a clean field dial that becomes a plot device.",
+    title: "Hamilton Khaki Field Murph",
+    ref: "H64615135 / H70605731",
+    history:
+      "Christopher Nolan's crew asked Hamilton for a readable field watch that could survive dust and time dilation on screen. The Murph became a cult piece after Interstellar: black dial, cathedral hands, and a case sized for a flight suit rather than a boardroom.",
+    buyNew: "https://www.hamiltonwatch.com/en-us/h64615135-khaki-field-murph.html",
+    buyUsed: "https://www.chrono24.com/hamilton/khaki-field--mod142.htm",
+  },
 ];
 
 export const seedCases: WatchCase[] = z.array(caseSchema).min(1).parse(catalog);

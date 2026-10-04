@@ -4,30 +4,33 @@
 
 Portfolio project for **Test Automation Engineer (JavaScript)**: a watch-identification quiz built as a real application with a deliberate **test pyramid** (unit → API contract → component). Identify the watch from a film still, confirm your guess, unlock a dossier with catalogue links, and move through a case queue.
 
-The player UI uses the **salon** layout (Satoshi, split still + copy). The same styling lives in `mock-swiss/` as a static reference; the product app is `src/web/` and talks to Express over HTTP. An **admin shell** (local-only for now) shares that visual language.
+The player UI uses the **salon** layout (Satoshi, split still + copy). The same styling lives in `mock-swiss/` as a static reference; the product app is `src/web/` and talks to Express over HTTP. The **admin** area uses the same visual language and signs in with **Supabase Auth**.
 
 ## Product
 
 ### Quiz (player)
 
-- Three cases (film stills), multiple-choice options or free-text model name.
+- Film stills with multiple-choice options or free-text model name (seed catalog locally, or published rows from Supabase when server env is set).
 - **Confirm** submits an ident; the UI shows **Correct** / **Incorrect** and hints on misses.
 - Correct idents lock the case, open the dossier, and update the session score.
 - Routes: `/` redirects to the first case; `/case/:id` for each still.
 - Public API responses never include `answer`, `aliases`, or `hint`.
+- No login required for the quiz.
 
-### Admin (sprint 7 — no cloud yet)
+### Admin
 
 - Routes: `/admin/login`, `/admin`, `/admin/cases/new`, `/admin/cases/:id`.
-- Login validates non-empty email/password locally; **Supabase auth is planned** (sprint 10).
-- Case list with empty state, locally saved cases (`sessionStorage`), and a static layout preview card.
-- Case form mirrors the domain `caseSchema` (still preview, options, aliases, dossier fields, published).
-- **Save** validates with Zod and shows **Saved locally** — no network calls yet.
+- **Sign in** with Supabase Auth (`signInWithPassword`). The account email must appear in the `admins` allowlist table (RLS + `is_admin()` RPC).
+- Users who are signed in but not on the allowlist see **Not an admin** with sign out.
+- **Case list and form** read and write **`cases`** in Supabase (including drafts). Still images upload to the **`stills`** bucket at `{caseId}/{filename}`; the row stores that object key and the server resolves public URLs for the quiz.
+- **Headline crop** on the case form: sliders for horizontal/vertical focus and zoom on the “Name the … watch” pill (stored as `inline_still_x/y/zoom`).
+- Stricter **`caseSchema`** and migrations `20260320140000_case_validation.sql` (and later) align DB checks with Zod. Run all files in `supabase/migrations/` in order in the SQL editor.
 
-### Supabase (sprint 8 — schema in repo)
+### Supabase
 
-- SQL migration: `supabase/migrations/` (`cases`, `public_cases` view without spoilers, `admins`, RLS, `stills` bucket policies).
-- Copy `.env.example` → `.env` when you create a Supabase project; the **quiz API still uses the embedded catalog** until sprint 9.
+- Migrations in `supabase/migrations/`: `cases`, `public_cases` view (no spoilers), `admins`, RLS, `stills` bucket, `is_admin()` for the browser client.
+- Run migration SQL in the Supabase SQL editor, create an Auth user, and insert their email into `admins` (exact address, no trailing spaces).
+- **Player catalog:** Express reads published `cases` with the **service role** when `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` are set; otherwise it uses the seed fixture in `src/server/seed-cases.ts`. If keys are set but Supabase is down, the API returns **503** (no silent fallback to seed).
 
 ## Tech stack
 
@@ -35,10 +38,10 @@ The player UI uses the **salon** layout (Satoshi, split still + copy). The same 
 |--------|--------|
 | UI | Preact 10, preact-router, Vite 8 |
 | API | Express 5, Zod (request/response validation) |
-| Domain | TypeScript modules (`normalize` / `isMatch`, cases catalog, in-memory session) |
+| Domain | TypeScript (`normalize` / `isMatch`, Zod `caseSchema`, in-memory session) |
+| Data | Supabase Postgres + Storage (`@supabase/supabase-js` on server and in the admin UI) |
 | Unit / API tests | Vitest (Node) |
-| Component tests | Vitest + jsdom, Testing Library (Preact), MSW (quiz flows only) |
-| Database (planned) | Supabase Postgres + Storage; migration SQL in repo |
+| Component tests | Vitest + jsdom, Testing Library (Preact), MSW (quiz flows), Supabase client mock (admin) |
 | E2E / a11y | Playwright in dependencies; `tests/e2e/` and `tests/a11y/` are placeholders |
 | Tooling | `tsx`, `concurrently`, `wait-on`, TypeScript 7 |
 
@@ -46,16 +49,16 @@ The player UI uses the **salon** layout (Satoshi, split still + copy). The same 
 
 ```
 src/
-  domain/           # ident matching, Zod case schema, session lock/score
-  server/           # createApp(), HTTP schemas, listen entry
-  web/              # Preact app (quiz + admin), styles, stills, watcher-api client
-    admin/          # login, case list, case form (local session + storage)
+  domain/           # ident, caseSchema, case-mapper, session (pruneLocked)
+  server/           # catalog port, seed-cases, still-url, load-env, createApp()
+  web/              # Preact app (quiz + admin), watcher-api client, supabase.ts
+    admin/          # login, gate (useAdminGate), list, form, Not an admin screen
 supabase/
-  migrations/       # reproducible schema (cases, public_cases, admins, RLS, stills)
+  migrations/       # schema + admin email / is_admin fixes
 tests/
-  unit/             # domain logic + migration smoke test
-  api/              # Express contract tests (in-process server + fetch)
-  component/        # quiz flows (MSW) + admin shell (no MSW)
+  unit/             # domain, mapper, still-url, migration smoke
+  api/              # Express contract + catalog port (503, fresh reads)
+  component/        # quiz (MSW) + admin (Supabase mock)
   e2e/              # (planned) Playwright
   a11y/             # (planned) axe in Playwright
 mock-swiss/         # static salon reference UI (optional demo)
@@ -75,13 +78,23 @@ cd watcher-automation
 npm install
 ```
 
-Optional (later sprints): copy `.env.example` to `.env` and fill Supabase values after creating a project and running the migration in the SQL editor.
+Optional — Supabase-backed catalog and admin login:
+
+1. Create a Supabase project and run migrations from `supabase/migrations/` in the SQL editor (in order).
+2. Create an Auth user; add the same email to `public.admins`.
+3. Copy `.env.example` → `.env` in the repo root and fill values from **Project Settings → API**:
+   - **Project URL** → `SUPABASE_URL` and `VITE_SUPABASE_URL`
+   - **Publishable key** → `VITE_SUPABASE_ANON_KEY`
+   - **Secret key** → `SUPABASE_SERVICE_ROLE_KEY` (server only, never in Vite)
+4. Restart `npm run dev` after changing `.env` (Vite reads `VITE_*` at startup).
+
+Without `.env`, the API uses the five-case seed and admin login stays disabled until `VITE_SUPABASE_*` is set.
 
 ## Run locally
 
 ### Full app (API + UI) — recommended
 
-Starts the API on port **3001** and Vite on **5173** (UI proxies `/api/*` to the API). Client HTTP code is `src/web/watcher-api.ts` (the Vite proxy must not treat that module as an API route).
+Starts the API on port **3001** and Vite on **5173** (UI proxies `/api/*` to the API). Client HTTP code is `src/web/watcher-api.ts` (the Vite proxy must not treat that module as an API route). Vite loads `.env` from the **repository root** (`envDir` in `vite.config.ts`).
 
 ```bash
 npm run dev
@@ -95,17 +108,17 @@ Open the URL Vite prints (usually `http://localhost:5173/`). Admin: `http://loca
 npm run dev:api
 ```
 
-Base URL: `http://127.0.0.1:3001`
+Base URL: `http://127.0.0.1:3001`. Loads `.env` from the repo root via `src/server/load-env.ts`.
 
 ### UI only
 
-Requires the API to be running on `3001` for the quiz routes.
+Requires the API on `3001` for quiz routes.
 
 ```bash
 npm run dev:web
 ```
 
-Admin routes work without the API (no fetch on `/admin/*`).
+Admin UI needs `VITE_SUPABASE_*` for sign-in; quiz routes need the API.
 
 ### Static mock (reference UI, no backend)
 
@@ -119,36 +132,36 @@ npm run mock
 
 | Variable | Where | Purpose |
 |----------|--------|---------|
-| `VITE_SUPABASE_URL` | Browser (Vite) | Supabase project URL (sprint 10+) |
-| `VITE_SUPABASE_ANON_KEY` | Browser | Anon key for admin auth (sprint 10+) |
-| `SUPABASE_URL` | Server only | Catalog from Supabase (sprint 9+) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server only | Never expose to the client |
+| `VITE_SUPABASE_URL` | Browser (Vite) | Supabase project URL for admin Auth |
+| `VITE_SUPABASE_ANON_KEY` | Browser | Publishable key (safe in the client bundle) |
+| `SUPABASE_URL` | Server only | Supabase project URL for catalog reads |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server only | Secret key; never expose to the client |
 
-See `.env.example`. Without server Supabase vars, Express keeps using `src/domain/cases.ts`.
+See `.env.example`. Do not commit `.env`.
 
 ## API
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/cases` | Public case list (no `answer`, `aliases`, or `hint`) |
+| `GET` | `/api/cases` | Public case list (no `answer`, `aliases`, or `hint`); `still` URLs are ready for `<img src>` |
 | `GET` | `/api/cases/:id` | Single public case |
 | `POST` | `/api/cases/:id/ident` | Body `{ "guess": "..." }` → correct + dossier or hint |
-| `GET` | `/api/session` | `identified`, `total`, `locked`, `index` |
+| `GET` | `/api/session` | `identified`, `total`, `locked`, `index` (locks pruned to current catalog) |
 
-Session state is **in-memory** (per server process).
+Session state is **in-memory** (one session per API process).
 
 ## Testing
 
 | Layer | Command | What it checks |
 |--------|---------|----------------|
-| Unit | `npm run test:unit` | `normalize`, `isMatch`, cases schema, session, Supabase migration file |
-| API / contract | `npm run test:api` | Status codes, JSON shape, no spoilers in GET |
-| Component | `npm run test:component` | Quiz: Confirm empty/wrong/correct, navigation, score, no admin fields on `/`; admin: login validation, save guards |
-| All (CI-style) | `npm test` | Runs unit + API + component |
+| Unit | `npm run test:unit` | `normalize`, `isMatch`, schema, mapper, inline-still focus, session, still-url |
+| API / contract | `npm run test:api` | Status codes, JSON shape, no spoilers, catalog 503, fresh reads |
+| Component | `npm run test:component` | Quiz (MSW); admin Auth, save guards, Supabase mock save → list |
+| All (CI-style) | `npm test` | Runs unit + API + component (68 tests) |
 
 Watch mode for unit tests: `npm run test:unit:watch`.
 
-Quiz component tests use **MSW** and do not require a live Express process. Admin component tests use local routes only.
+Quiz component tests use **MSW** and do not require a live Express process. Admin component tests use a **Supabase client mock** (no live cloud in CI).
 
 ## Continuous integration
 
@@ -162,7 +175,17 @@ Three parallel jobs mirror the pyramid:
 | API contract | `npm run test:api` |
 | Component | `npm run test:component` |
 
-Local equivalent: `npm test`. E2E is not in CI yet (Sprint 4 deferred).
+Local equivalent: `npm test`. E2E is not in CI yet (sprint 4 deferred).
+
+## Roadmap (honest)
+
+| Area | Status |
+|------|--------|
+| Unit + API + component pyramid | **Implemented** |
+| Supabase catalog on server (sprint 9) | **Implemented** |
+| Admin Supabase Auth (sprint 10) | **Implemented** |
+| Admin CRUD + stills upload (sprint 11) | **Implemented** |
+| Playwright E2E / visual / a11y | Planned (`@playwright/test` installed, no `playwright.config.ts` yet) |
 
 ## Scripts reference
 

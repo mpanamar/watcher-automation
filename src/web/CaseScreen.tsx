@@ -1,6 +1,7 @@
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { route } from "preact-router";
+import { inlineStillBackgroundPosition, inlineStillBackgroundSize } from "../domain/inline-still-focus.ts";
 import {
   postIdent,
   stillSrc,
@@ -125,7 +126,15 @@ export function CaseScreen({
               <span
                 class="inline-still"
                 aria-hidden="true"
-                style={{ backgroundImage: `url("${stillSrc(caseItem.still)}")` }}
+                style={{
+                  backgroundImage: `url("${stillSrc(caseItem.still)}")`,
+                  ...(inlineStillBackgroundPosition(caseItem)
+                    ? { backgroundPosition: inlineStillBackgroundPosition(caseItem) }
+                    : {}),
+                  ...(inlineStillBackgroundSize(caseItem)
+                    ? { backgroundSize: inlineStillBackgroundSize(caseItem) }
+                    : {}),
+                }}
               />{" "}
               watch
             </h1>

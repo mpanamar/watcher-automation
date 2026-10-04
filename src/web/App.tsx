@@ -17,6 +17,7 @@ import { AdminCaseForm } from "./admin/AdminCaseForm.tsx";
 
 export function App() {
   const [cases, setCases] = useState<PublicWatchCase[]>([]);
+  const [casesReady, setCasesReady] = useState(false);
   const [session, setSession] = useState<SessionResponse | null>(null);
   const [dossiers, setDossiers] = useState<Record<string, Dossier>>({});
   const [error, setError] = useState("");
@@ -38,9 +39,11 @@ export function App() {
       .then(([list, current]) => {
         setCases(list);
         setSession(current);
+        setCasesReady(true);
       })
       .catch((reason: unknown) => {
         setError(reason instanceof Error ? reason.message : "Could not load Watcher");
+        setCasesReady(true);
       });
   }, []);
 
@@ -100,7 +103,7 @@ export function App() {
         <AdminLogin path="/admin/login" />
         <AdminCaseForm path="/admin/cases/:id" />
         <AdminList path="/admin" />
-        <Home path="/" cases={cases} />
+        <Home path="/" cases={cases} casesReady={casesReady} catalogFailed={Boolean(error)} />
         <CaseScreen
           path="/case/:id"
           cases={cases}
@@ -114,9 +117,36 @@ export function App() {
   );
 }
 
-function Home({ cases }: { cases: PublicWatchCase[]; path?: string }) {
+function Home({
+  cases,
+  casesReady,
+  catalogFailed,
+}: {
+  cases: PublicWatchCase[];
+  casesReady: boolean;
+  catalogFailed: boolean;
+  path?: string;
+}) {
   useEffect(() => {
     if (cases[0]) route(`/case/${cases[0].id}`, true);
   }, [cases]);
-  return <p class="load-error">Loading cases</p>;
+
+  if (!casesReady) {
+    return <p class="load-error">Loading cases…</p>;
+  }
+
+  if (catalogFailed) {
+    return null;
+  }
+
+  if (!cases.length) {
+    return (
+      <p class="load-error">
+        No published cases yet. Mark a case <strong>Published</strong> in admin and save, or configure{" "}
+        <code>SUPABASE_*</code> on the API if you use Supabase.
+      </p>
+    );
+  }
+
+  return <p class="load-error">Loading cases…</p>;
 }

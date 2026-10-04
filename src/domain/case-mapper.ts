@@ -7,6 +7,16 @@ function readString(row: CaseRow, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function readPercent(row: CaseRow, key: string): number | undefined {
+  const value = row[key];
+  if (typeof value === "number" && Number.isInteger(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isInteger(parsed)) return parsed;
+  }
+  return undefined;
+}
+
 /** Maps a Supabase `cases` row (snake_case) to a domain case, or undefined if invalid. */
 export function mapCaseRow(row: CaseRow): WatchCase | undefined {
   const options = row.options;
@@ -29,8 +39,41 @@ export function mapCaseRow(row: CaseRow): WatchCase | undefined {
     history: readString(row, "history"),
     buyNew: readString(row, "buy_new"),
     buyUsed: readString(row, "buy_used"),
+    inlineStillX: readPercent(row, "inline_still_x"),
+    inlineStillY: readPercent(row, "inline_still_y"),
+    inlineStillZoom: readPercent(row, "inline_still_zoom"),
   };
 
   const result = caseSchema.safeParse(candidate);
   return result.success ? result.data : undefined;
+}
+
+export function mapWatchCaseToRow(
+  item: WatchCase,
+  extra: { published: boolean; sort_order: number },
+): Record<string, unknown> {
+  return {
+    id: item.id,
+    still: item.still,
+    still_alt: item.stillAlt,
+    source: item.source,
+    subject: item.subject,
+    frame: item.frame,
+    question: item.question,
+    options: item.options,
+    answer: item.answer,
+    aliases: item.aliases,
+    hint: item.hint,
+    title: item.title,
+    ref: item.ref,
+    history: item.history,
+    buy_new: item.buyNew,
+    buy_used: item.buyUsed,
+    inline_still_x: item.inlineStillX ?? null,
+    inline_still_y: item.inlineStillY ?? null,
+    inline_still_zoom: item.inlineStillZoom ?? null,
+    published: extra.published,
+    sort_order: extra.sort_order,
+    updated_at: new Date().toISOString(),
+  };
 }

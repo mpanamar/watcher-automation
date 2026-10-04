@@ -17,8 +17,23 @@ async function readJson(response: Response): Promise<unknown> {
 
 export async function getCases(): Promise<PublicWatchCase[]> {
   const response = await fetch("/api/cases");
-  if (!response.ok) throw new Error("Could not load cases");
-  return publicCaseListSchema.parse(await readJson(response));
+  const body = await readJson(response);
+  if (!response.ok) {
+    const apiMessage =
+      body && typeof body === "object" && "error" in body && typeof (body as { error: unknown }).error === "string"
+        ? (body as { error: string }).error
+        : null;
+    throw new Error(
+      apiMessage
+        ? `${apiMessage} (API ${response.status})`
+        : `Could not load cases (API ${response.status}). Is the API running on port 3001?`,
+    );
+  }
+  try {
+    return publicCaseListSchema.parse(body);
+  } catch {
+    throw new Error("Could not load cases: API response did not match the expected shape.");
+  }
 }
 
 export async function getCase(id: string): Promise<PublicWatchCase> {

@@ -1,19 +1,35 @@
 import { useEffect, useState } from "preact/hooks";
 import { route } from "preact-router";
 import { signOutAdmin } from "./admin-auth.ts";
+import { adminStillPublicUrl, listAdminCases, type AdminCaseSummary } from "./admin-cases.ts";
 import { AdminNotAdmin } from "./AdminNotAdmin.tsx";
-import { loadSavedCases } from "./admin-storage.ts";
-import { adminMockCaseCard } from "./mock-case.ts";
 import { useAdminGate } from "./useAdminGate.ts";
 
 export function AdminList(_props: { path?: string }) {
   const gate = useAdminGate();
-  const [saved, setSaved] = useState(loadSavedCases());
+  const [cases, setCases] = useState<AdminCaseSummary[]>([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (gate.status === "anonymous" || gate.status === "unconfigured") {
       route("/admin/login", true);
     }
+  }, [gate.status]);
+
+  useEffect(() => {
+    if (gate.status !== "authenticated") return;
+    setLoading(true);
+    listAdminCases()
+      .then((rows) => {
+        setCases(rows);
+        setError("");
+      })
+      .catch((reason: unknown) => {
+        setCases([]);
+        setError(reason instanceof Error ? reason.message : "Could not load cases");
+      })
+      .finally(() => setLoading(false));
   }, [gate.status]);
 
   if (gate.status === "loading") {
@@ -26,10 +42,6 @@ export function AdminList(_props: { path?: string }) {
 
   if (gate.status === "not_admin") {
     return <AdminNotAdmin email={gate.email} />;
-  }
-
-  function refresh() {
-    setSaved(loadSavedCases());
   }
 
   async function signOut() {
@@ -55,18 +67,33 @@ export function AdminList(_props: { path?: string }) {
           </div>
         </div>
 
-        {saved.length === 0 ? <p class="admin-empty">No cases</p> : null}
+        {loading ? <p class="admin-empty">Loading cases…</p> : null}
+        {error ? (
+          <p class="admin-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+        {!loading && !error && cases.length === 0 ? <p class="admin-empty">No cases</p> : null}
 
         <ul class="admin-case-list">
-          {saved.map((item) => (
+          {cases.map((item) => (
             <li key={item.id}>
               <button
                 type="button"
                 class="admin-case-card"
                 onClick={() => route(`/admin/cases/${item.id}`)}
               >
+                {item.still ? (
+                  <img
+                    class="admin-case-thumb"
+                    src={adminStillPublicUrl(item.still)}
+                    alt=""
+                    width={48}
+                    height={48}
+                  />
+                ) : null}
                 <span class="admin-case-id">{item.id}</span>
-                <span class="admin-case-title">{item.title}</span>
+                <span class="admin-case-title">{item.title || "Untitled"}</span>
                 <span class={`admin-badge ${item.published ? "is-live" : "is-draft"}`}>
                   {item.published ? "Published" : "Draft"}
                 </span>
@@ -74,23 +101,6 @@ export function AdminList(_props: { path?: string }) {
             </li>
           ))}
         </ul>
-
-        <h2 class="admin-subtitle">Layout preview</h2>
-        <ul class="admin-case-list">
-          <li>
-            <div class="admin-case-card admin-case-card--static" aria-hidden="false">
-              <span class="admin-case-id">{adminMockCaseCard.id}</span>
-              <span class="admin-case-title">{adminMockCaseCard.title}</span>
-              <span class={`admin-badge ${adminMockCaseCard.published ? "is-live" : "is-draft"}`}>
-                {adminMockCaseCard.published ? "Published" : "Draft"}
-              </span>
-            </div>
-          </li>
-        </ul>
-
-        <button type="button" class="sr" onClick={refresh}>
-          Refresh list
-        </button>
       </section>
     </main>
   );

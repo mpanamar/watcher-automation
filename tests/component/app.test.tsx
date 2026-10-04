@@ -65,11 +65,11 @@ describe("Watcher app", () => {
 
     await user.click(screen.getByRole("button", { name: "Next" }));
     await screen.findByText(/driver's wrist/i);
-    expect(screen.getByText("1 / 3")).toBeInTheDocument();
+    expect(screen.getByText("1 / 5")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Previous" }));
     await screen.findByRole("heading", { name: "Omega Seamaster Diver 300M" });
     expect(screen.getByRole("button", { name: "Confirm" })).toBeDisabled();
-    expect(screen.getByText("1 / 3")).toBeInTheDocument();
+    expect(screen.getByText("1 / 5")).toBeInTheDocument();
   });
 });
