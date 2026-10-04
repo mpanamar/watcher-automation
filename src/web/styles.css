@@ -56,17 +56,25 @@ button { cursor: pointer; }
   padding: 8px 12px;
 }
 
-.page { overflow-x: hidden; width: 100%; }
+.page { overflow-x: hidden; width: 100%; padding-bottom: 64px; }
 .salon {
   display: grid;
   grid-template-columns: minmax(0, 5.5fr) minmax(0, 6.5fr);
   gap: clamp(16px, 2vw, 32px);
-  align-items: end;
+  align-items: start;
   max-width: none;
   margin: 0;
   padding: 12px 0 24px clamp(24px, 3vw, 48px);
 }
-.copy { position: relative; z-index: 1; padding-bottom: 24px; }
+.copy { position: relative; z-index: 1; padding-bottom: 8px; min-width: 0; }
+.salon .copy h1 {
+  margin: 0 0 0.2em;
+  max-width: 64rem;
+  font-size: clamp(3.2rem, 6vw, 6rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+}
 h1 {
   margin: 0;
   max-width: 64rem;
@@ -96,17 +104,33 @@ h1 {
   }
 }
 .lead { max-width: 34rem; color: var(--mute); font-size: 1.05rem; }
+.salon .copy .lead {
+  margin: 1.5rem 0 0;
+  line-height: 1.55;
+}
 .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 20px 0 24px; }
+.salon .copy .facts {
+  margin: 2rem 0 2.5rem;
+  gap: 20px;
+}
 .facts dt { color: var(--mute); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; }
 .facts dd { margin: 4px 0 0; }
+.salon .copy .facts dd {
+  margin-top: 2px;
+}
 
 .options { display: flex; min-height: 120px; border-top: 1px solid var(--line); }
+.salon .copy .options {
+  min-height: 0;
+  padding-top: 4px;
+}
 .opt {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 14px;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
   border: 0;
   border-right: 1px solid var(--line);
   background: transparent;
@@ -117,9 +141,20 @@ h1 {
 .opt:last-child { border-right: 0; }
 .opt:hover, .opt[aria-pressed="true"] { flex: 2.4; background: var(--fill); color: var(--fill-ink); }
 .opt:disabled { cursor: default; }
-.opt kbd { font-family: inherit; letter-spacing: 0.14em; font-size: 0.75rem; }
+.opt kbd { font-family: inherit; letter-spacing: 0.14em; font-size: 0.75rem; line-height: 1; }
+.salon .copy .opt {
+  gap: 8px;
+  padding: 10px 14px 14px;
+}
+.salon .copy .opt span {
+  line-height: 1.35;
+}
 
 .ident { display: grid; gap: 10px; margin-top: 22px; max-width: 32rem; }
+.salon .copy .ident {
+  margin-top: 2.25rem;
+  gap: 14px;
+}
 .ident label { letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.72rem; color: var(--mute); }
 .ident input { border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 12px 0; outline: none; }
 .hint { display: none; margin: 0; }
@@ -137,6 +172,9 @@ h1 {
 }
 .fire:disabled { opacity: 0.35; cursor: not-allowed; }
 .lamp { letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.78rem; }
+.salon .copy .lamp {
+  margin: 2rem 0 0;
+}
 .status-lock { color: var(--ok); }
 
 .frame { margin: 0; overflow: hidden; transform: translateY(6%); }
@@ -167,15 +205,31 @@ h1 {
 .buys { display: flex; gap: 28px; margin-top: 36px; }
 .buys a { letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.78rem; }
 
-.queue {
+.copy .queue {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 24px 32px 80px;
+  gap: 12px;
+  width: 100%;
+  max-width: 36rem;
+  margin: 4.5rem 0 0;
+  padding: 1.75rem 0 0;
+  border-top: 1px solid var(--line);
 }
-.queue p { margin: 0; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.78rem; }
+.copy .queue p.score {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.4em;
+  margin: 0;
+  flex: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+.copy .queue button {
+  flex-shrink: 0;
+}
 .load-error { padding: 24px 32px; color: var(--mute); }
 
 @media (max-width: 960px) {

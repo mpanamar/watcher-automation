@@ -203,6 +203,20 @@ export function CaseScreen({
             <p class="lamp">
               <span>Status</span> <output class={locked ? "status-lock" : undefined}>{status}</output>
             </p>
+            <nav class="queue" aria-label="Case queue">
+              <button type="button" onClick={() => go(-1)}>
+                Previous
+              </button>
+              <p class="score">
+                <span class="score-label">Identified</span>
+                <data value={session?.identified ?? 0}>
+                  {session?.identified ?? 0} / {session?.total ?? cases.length}
+                </data>
+              </p>
+              <button type="button" onClick={() => go(1)}>
+                Next
+              </button>
+            </nav>
           </div>
           <figure class="frame">
             <img src={stillSrc(caseItem.still)} alt={caseItem.stillAlt} width={1600} height={1066} />
@@ -226,21 +240,6 @@ export function CaseScreen({
             </footer>
           </section>
         ) : null}
-
-        <nav class="queue" aria-label="Case queue">
-        <button type="button" onClick={() => go(-1)}>
-          Previous
-        </button>
-        <p class="score">
-          Identified
-          <data value={session?.identified ?? 0}>
-            {session?.identified ?? 0} / {session?.total ?? cases.length}
-          </data>
-        </p>
-        <button type="button" onClick={() => go(1)}>
-          Next
-        </button>
-        </nav>
       </main>
     </>
   );
